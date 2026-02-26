@@ -26,6 +26,8 @@ type Config struct {
 	RateLimitBurst int
 
 	CacheTTL time.Duration
+
+	PublicKeyPath string
 }
 
 func Load() (*Config, error) {
@@ -56,6 +58,7 @@ func Load() (*Config, error) {
 		RateLimitRPS:   rps,
 		RateLimitBurst: burst,
 		CacheTTL:       time.Duration(ttlSec) * time.Second,
+		PublicKeyPath:  getEnv("PUBLIC_KEY_PATH", "public.pem"),
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -80,6 +83,9 @@ func (c *Config) validate() error {
 	}
 	if c.RateLimitRPS <= 0 {
 		return fmt.Errorf("RATE_LIMIT_RPS must be greater than 0")
+	}
+	if c.PublicKeyPath == "" {
+		return fmt.Errorf("PUBLIC_KEY_PATH must not be empty")
 	}
 	return nil
 }

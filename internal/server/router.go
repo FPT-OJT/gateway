@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -13,10 +14,10 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func NewRouter(cfg *config.Config, rateStore mw.RateLimiterStore, cacheStore mw.CacheStore, log zerolog.Logger) *chi.Mux {
+func NewRouter(cfg *config.Config, rateStore mw.RateLimiterStore, cacheStore mw.CacheStore, pubKey *rsa.PublicKey, log zerolog.Logger) *chi.Mux {
 	r := chi.NewRouter()
 
-	initMiddleware(r, cfg, rateStore, cacheStore, log)
+	initMiddleware(r, cfg, rateStore, cacheStore, pubKey, log)
 
 	r.Get("/health", handleHealth)
 	mountProxy(r, cfg, log)
@@ -24,7 +25,7 @@ func NewRouter(cfg *config.Config, rateStore mw.RateLimiterStore, cacheStore mw.
 	return r
 }
 
-func initMiddleware(r *chi.Mux, cfg *config.Config, rateStore mw.RateLimiterStore, cacheStore mw.CacheStore, log zerolog.Logger) {
+func initMiddleware(r *chi.Mux, cfg *config.Config, rateStore mw.RateLimiterStore, cacheStore mw.CacheStore, pubKey *rsa.PublicKey, log zerolog.Logger) {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(mw.Recovery(log))
@@ -36,6 +37,12 @@ func initMiddleware(r *chi.Mux, cfg *config.Config, rateStore mw.RateLimiterStor
 		RPS:   cfg.RateLimitRPS,
 		Burst: cfg.RateLimitBurst,
 	}, log))
+
+	if pubKey != nil {
+		r.Use(mw.JWTAuth(pubKey, log))
+	} else {
+		log.Warn().Msg("router: no public key provided, JWT verification is DISABLED")
+	}
 
 	r.Use(mw.Cache(cacheStore, mw.CacheConfig{
 		TTL: cfg.CacheTTL,

@@ -96,8 +96,6 @@ func cacheKey(r *http.Request) string {
 	return sb.String()
 }
 
-// responseRecorder wraps http.ResponseWriter so we can capture the body and
-// status code without preventing the response from reaching the original writer.
 type responseRecorder struct {
 	http.ResponseWriter
 	buf    *bytes.Buffer
@@ -110,6 +108,6 @@ func (r *responseRecorder) WriteHeader(status int) {
 }
 
 func (r *responseRecorder) Write(b []byte) (int, error) {
-	r.buf.Write(b) // capture
+	r.buf.Write(b)
 	return r.ResponseWriter.Write(b)
 }
