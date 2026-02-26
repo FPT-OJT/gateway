@@ -34,16 +34,20 @@ func initMiddleware(r *chi.Mux, log zerolog.Logger) {
 }
 
 func mountProxy(r *chi.Mux, cfg *config.Config, log zerolog.Logger) {
-	coreTarget, _ := url.Parse(cfg.CoreServiceURL)
-	coreProxy := proxy.NewCoreProxy(coreTarget, log)
-	authTarget, _ := url.Parse(cfg.AuthServiceURL)
-	authProxy := proxy.NewAuthProxy(authTarget, log)
-	aiTarget, _ := url.Parse(cfg.AiServiceURL)
-	aiProxy := proxy.NewAiProxy(aiTarget, log)
+	services := []struct {
+		prefix string
+		rawURL string
+	}{
+		{"/api/core", cfg.CoreServiceURL},
+		{"/api/auth", cfg.AuthServiceURL},
+		{"/api/ai", cfg.AiServiceURL},
+	}
 
-	r.Mount("/api/core", http.StripPrefix("/api/core", coreProxy))
-	r.Mount("/api/auth", http.StripPrefix("/api/auth", authProxy))
-	r.Mount("/api/ai", http.StripPrefix("/api/ai", aiProxy))
+	for _, svc := range services {
+		target, _ := url.Parse(svc.rawURL)
+		p := proxy.New(proxy.Config{Prefix: svc.prefix, Target: target}, log)
+		r.Mount(svc.prefix, http.StripPrefix(svc.prefix, p))
+	}
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
