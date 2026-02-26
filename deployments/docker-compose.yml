@@ -1,0 +1,107 @@
+services:
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+
+    volumes:
+      - redis_data:/data
+
+    ports:
+      - "6379:6379"
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+    security_opt:
+      - no-new-privileges:true
+
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 160M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+
+  # ── Gateway ─────────────────────────────────────────────────────────────────
+  gateway:
+    build:
+      context: ..
+      dockerfile: ./deployments/Dockerfile
+    env_file:
+      - ../.env
+    image: fpt-ojt/gateway:latest
+
+    restart: unless-stopped
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+
+    environment:
+      PORT: ${PORT:-8080}
+      CORE_SERVICE_URL: ${CORE_SERVICE_URL:-http://localhost:8081}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://localhost:8082}
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://localhost:8083}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      RATE_LIMIT_RPS: ${RATE_LIMIT_RPS:-100}
+      RATE_LIMIT_BURST: ${RATE_LIMIT_BURST:-20}
+      CACHE_TTL: ${CACHE_TTL:-60}
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:${PORT:-8080}/health",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 128M
+        reservations:
+          cpus: "0.25"
+          memory: 32M
+
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+
+    user: "65532:65532"
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+
+volumes:
+  redis_data:

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/FPT-OJT/gateway/pkg/errors"
+	"github.com/FPT-OJT/gateway/pkg/utils"
 
 	"github.com/rs/zerolog"
 )
@@ -65,18 +66,8 @@ func stripPrefix(prefix, s string) string {
 	return trimmed
 }
 
-func realIP(r *http.Request) string {
-	if ip := r.Header.Get("X-Real-IP"); ip != "" {
-		return ip
-	}
-	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		return strings.SplitN(fwd, ",", 2)[0]
-	}
-	return r.RemoteAddr
-}
-
 func forwardIP(req *http.Request) {
-	if clientIP := realIP(req); clientIP != "" {
+	if clientIP := utils.ClientIp(req); clientIP != "" {
 		req.Header.Set("X-Forwarded-For", clientIP)
 		req.Header.Set("X-Real-IP", clientIP)
 	}

@@ -13,10 +13,10 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func NewRouter(cfg *config.Config, log zerolog.Logger) *chi.Mux {
+func NewRouter(cfg *config.Config, rateStore mw.RateLimiterStore, cacheStore mw.CacheStore, log zerolog.Logger) *chi.Mux {
 	r := chi.NewRouter()
 
-	initMiddleware(r, log)
+	initMiddleware(r, cfg, rateStore, cacheStore, log)
 
 	r.Get("/health", handleHealth)
 	mountProxy(r, cfg, log)
@@ -24,13 +24,22 @@ func NewRouter(cfg *config.Config, log zerolog.Logger) *chi.Mux {
 	return r
 }
 
-func initMiddleware(r *chi.Mux, log zerolog.Logger) {
+func initMiddleware(r *chi.Mux, cfg *config.Config, rateStore mw.RateLimiterStore, cacheStore mw.CacheStore, log zerolog.Logger) {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(mw.Recovery(log))
 	r.Use(mw.Security)
 	r.Use(mw.TraceLog(log))
 	r.Use(middleware.Compress(5))
+
+	r.Use(mw.RateLimit(rateStore, mw.RateLimitConfig{
+		RPS:   cfg.RateLimitRPS,
+		Burst: cfg.RateLimitBurst,
+	}, log))
+
+	r.Use(mw.Cache(cacheStore, mw.CacheConfig{
+		TTL: cfg.CacheTTL,
+	}, log))
 }
 
 func mountProxy(r *chi.Mux, cfg *config.Config, log zerolog.Logger) {
