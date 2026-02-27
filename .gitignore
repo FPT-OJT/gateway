@@ -32,3 +32,5 @@ Editor/IDE
 .vscode/
 .agents/*
 skills-lock.json
+public.pem
+**/*.pem
