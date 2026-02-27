@@ -1,6 +1,7 @@
 # Git
 .git
 .gitignore
+.github/
 
 # Agent / IDE metadata
 .agents
@@ -10,6 +11,7 @@
 
 # Local environment — never bake secrets into images
 .env
+.env.example
 *.env
 
 # Build output
@@ -32,3 +34,9 @@ docker-compose*.yml
 # OS noise
 .DS_Store
 Thumbs.db
+
+# IDEA 
+.idea/
+*.iml
+*.iws
+.vscode/
