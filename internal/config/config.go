@@ -19,6 +19,7 @@ type Config struct {
 
 	LogLevel string
 
+	PublicKey string
 	// Redis connection URL (e.g. redis://:password@host:6379/0).
 	RedisURL string
 
@@ -26,8 +27,6 @@ type Config struct {
 	RateLimitBurst int
 
 	CacheTTL time.Duration
-
-	PublicKeyPath string
 }
 
 func Load() (*Config, error) {
@@ -48,6 +47,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("config: CACHE_TTL must be an integer (seconds): %w", err)
 	}
 
+	publicKey := getEnv("PUBLIC_KEY", "")
+	if publicKey == "" {
+		return nil, fmt.Errorf("config: PUBLIC_KEY must not be empty")
+	}
+
 	cfg := &Config{
 		Port:           getEnv("PORT", "8080"),
 		CoreServiceURL: getEnv("CORE_SERVICE_URL", "http://localhost:8090"),
@@ -58,7 +62,6 @@ func Load() (*Config, error) {
 		RateLimitRPS:   rps,
 		RateLimitBurst: burst,
 		CacheTTL:       time.Duration(ttlSec) * time.Second,
-		PublicKeyPath:  getEnv("PUBLIC_KEY_PATH", "public.pem"),
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -83,9 +86,6 @@ func (c *Config) validate() error {
 	}
 	if c.RateLimitRPS <= 0 {
 		return fmt.Errorf("RATE_LIMIT_RPS must be greater than 0")
-	}
-	if c.PublicKeyPath == "" {
-		return fmt.Errorf("PUBLIC_KEY_PATH must not be empty")
 	}
 	return nil
 }

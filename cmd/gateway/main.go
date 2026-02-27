@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rsa"
 	"log"
-	"os"
 
 	"github.com/FPT-OJT/gateway/internal/cache"
 	"github.com/FPT-OJT/gateway/internal/config"
@@ -33,7 +32,7 @@ func main() {
 
 	log.Info().Str("redis_url", cfg.RedisURL).Msg("redis connected")
 
-	pubKey, err := loadPublicKey(cfg.PublicKeyPath)
+	pubKey, err := loadPublicKey(cfg.PublicKey)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to parse public key from public.pem")
 	}
@@ -48,10 +47,6 @@ func main() {
 	}
 }
 
-func loadPublicKey(path string) (*rsa.PublicKey, error) {
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return jwt.ParseRSAPublicKeyFromPEM(bytes)
+func loadPublicKey(key string) (*rsa.PublicKey, error) {
+	return jwt.ParseRSAPublicKeyFromPEM([]byte(key))
 }
