@@ -41,8 +41,6 @@ services:
     build:
       context: ..
       dockerfile: ./deployments/Dockerfile
-    env_file:
-      - ../.env
     image: fpt-ojt/gateway:latest
 
     restart: unless-stopped
@@ -61,7 +59,7 @@ services:
       AI_SERVICE_URL: ${AI_SERVICE_URL:-http://localhost:8082}
       AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://localhost:8083}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_URL: redis://redis:6379/0
       RATE_LIMIT_RPS: ${RATE_LIMIT_RPS:-100}
       RATE_LIMIT_BURST: ${RATE_LIMIT_BURST:-20}
       CACHE_TTL: ${CACHE_TTL:-60}

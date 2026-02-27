@@ -29,7 +29,7 @@ build-image:
 	podman build -t fpt-ojt/gateway:latest -f deployments/Dockerfile .
 
 up:
-	podman compose -f deployments/docker-compose.yml up -d --build
+	podman compose --env-file .env -f deployments/docker-compose.yml up -d --build
 down:
 	podman compose -f deployments/docker-compose.yml down
 container-logs:
