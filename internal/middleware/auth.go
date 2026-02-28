@@ -28,6 +28,13 @@ type UserContextKey struct{}
 func JWTAuth(pubKey *rsa.PublicKey, log zerolog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip authentication for public routes
+			if strings.Contains(r.URL.Path, "/public") {
+				log.Debug().Str("path", r.URL.Path).Msg("auth: public route, skipping authentication")
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
 				log.Debug().Msg("auth: no authorization header, proceeding unauthenticated")
