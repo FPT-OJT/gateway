@@ -42,13 +42,18 @@ func JWTAuth(pubKey *rsa.PublicKey, log zerolog.Logger) func(http.Handler) http.
 				return
 			}
 
+			// Extract token - accept both "Bearer <token>" and "<token>"
+			var tokenStr string
 			parts := strings.Split(authHeader, " ")
-			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
+				tokenStr = parts[1]
+			} else if len(parts) == 1 {
+				tokenStr = parts[0]
+			} else {
 				log.Warn().Str("header", authHeader).Msg("auth: malformed authorization header")
-				sendUnauthorized(w, "Malformed Authorization header. Expected 'Bearer <token>'")
+				sendUnauthorized(w, "Malformed Authorization header. Expected 'Bearer <token>' or '<token>'")
 				return
 			}
-			tokenStr := parts[1]
 
 			token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
