@@ -51,8 +51,7 @@ services:
 
     ports:
       - "${PORT:-8080}:${PORT:-8080}"
-    volumes:
-      - ./public.pem:/app/public.pem:ro,Z
+
     environment:
       PORT: ${PORT:-8080}
       CORE_SERVICE_URL: ${CORE_SERVICE_URL:-http://localhost:8081}
@@ -63,7 +62,7 @@ services:
       RATE_LIMIT_RPS: ${RATE_LIMIT_RPS:-100}
       RATE_LIMIT_BURST: ${RATE_LIMIT_BURST:-20}
       CACHE_TTL: ${CACHE_TTL:-60}
-      PUBLIC_KEY_PATH: /app/public.pem
+      PUBLIC_KEY: ${PUBLIC_KEY}
 
     logging:
       driver: json-file

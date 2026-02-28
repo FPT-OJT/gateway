@@ -58,6 +58,7 @@ func Load() (*Config, error) {
 		AuthServiceURL: getEnv("AUTH_SERVICE_URL", "http://localhost:8091"),
 		AiServiceURL:   getEnv("AI_SERVICE_URL", "http://localhost:8092"),
 		LogLevel:       strings.ToLower(getEnv("LOG_LEVEL", "info")),
+		PublicKey:      publicKey,
 		RedisURL:       getEnv("REDIS_URL", "redis://localhost:6379/0"),
 		RateLimitRPS:   rps,
 		RateLimitBurst: burst,
